@@ -10,6 +10,8 @@
     "commit": "e129ade681adff8cbb19f82e63f688fef2f08f32"
   },
   "dependencies": {
+    "axios": "^1.4.0",
+    "cli-table": "^0.3.11",
     "colors": "^1.4.0",
     "markdown-link-extractor": "^3.1.0",
     "marked": "^6.0.0"
