@@ -15,7 +15,7 @@
 
 ## 1. Introduction
 
-![banner](images\banner.png)
+![banner](./images/banner.png)
 
 An API (Application Programming Interface) is a set of rules and protocols that allow different applications to communicate with each other. In simple terms, an API acts as a bridge that allows two programs or systems to exchange information and perform actions in a coordinated manner.
 
@@ -26,7 +26,7 @@ Markdown files can contain links to websites, online resources, or even to other
 
 For example:
 
-![example](images\image.png)
+![example](./images/image.png)
 
 ## 2. Summary
 
@@ -38,7 +38,7 @@ Upon completion, the tool furnishes a comprehensive report. This report encompas
 
 ## 3. Flow diagram used to develop the project
 
-![Diagram](images\Diagram.svg)
+![Diagram](./images/Diagram.svg)
 
 ## 4. How to use
 
@@ -68,19 +68,19 @@ options: Argument that allows you to specify certain features to evaluate:
 
 Depending on the selected commands, the API can return a table containing the information extracted through the HTTP request:
 
-![validate](images\validate.png) 
+![validate](./images/validate.png) 
 
 
 
 A table with basic statistics about the found links (a count of operational links, broken links, and a total):
 
-![stats](images\stats.png) 
+![stats](./images/stats.png) 
 
 
 
 As well as two tables including all the aforementioned information:
 
-![validate-stats](images\validate-and-stats.png)
+![validate-stats](./images/validate-and-stats.png)
 
 
 
