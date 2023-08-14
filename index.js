@@ -4,7 +4,6 @@ const colors = require('colors');
 const Table = require('cli-table');
 const markdownLinkExtractor = require('markdown-link-extractor');
 const axios = require('axios');
-const { error } = require('console');
 
 
 colors.setTheme({
@@ -14,7 +13,7 @@ colors.setTheme({
   warn: 'yellow',
 });
 
-const mdLinks = (route = process.argv[2]) => {
+const mdLinks = (route = process.argv[2], options = {validate: false, stats: false}) => {
   config = { 
     columns: {
       0: {
@@ -84,8 +83,8 @@ const mdLinks = (route = process.argv[2]) => {
           if (stats.isFile()) {
             console.log(`La ruta "${absoluteRoute}" es un archivo.`);
             const mdContent = fs.readFileSync(absoluteRoute, 'utf-8');
-            const links = markdownLinkExtractor.extract(mdContent); // Extraer los enlaces del archivo .md
-            resolve({ type: 'file', path: absoluteRoute, content: mdContent, links: url });
+            const links = markdownLinkExtractor.extract(mdContent); // Extract links from the .md file
+            resolve({ type: 'file', path: absoluteRoute, content: mdContent, links: links });
           } else if (stats.isDirectory()) {
             console.log(colors.warn(`La ruta "${absoluteRoute}" es un directorio.`));
 
@@ -95,7 +94,7 @@ const mdLinks = (route = process.argv[2]) => {
               resolve({ type: 'directory', path: absoluteRoute, contents: [], links: [] });
             } else {
               const mdFiles = extractMDFilesFromDir(absoluteRoute);
-              const allLinks = mdFiles.flatMap((file) => file.links); // Unir los enlaces de todos los archivos .md
+              const allLinks = mdFiles.flatMap((file) => file.links); // Combine links from all .md files
               resolve({ type: 'directory', path: absoluteRoute, contents: mdFiles, links: allLinks });
             }
           } else {
@@ -111,91 +110,44 @@ const mdLinks = (route = process.argv[2]) => {
 async function getHttpCode(url) {
   try {
     const response = await axios.get(url);
-    return { httpCode: colors.green(response.status), statusMessage: colors.green('OK ✔'), response: response.data };
+    return { httpCode: response.status, statusMessage:'OK', response: response.data };
   } catch (error) {
-    return { httpCode: colors.fail('404'), statusMessage: colors.fail('FAIL X'), response: error.response.data };
+    return { httpCode: colors.fail('404'), statusMessage: colors.fail('FAIL'), response: error.response.data };
   }
 }
 
-mdLinks()
-  .then(result => {
-    if (result.type === 'file') {
-      console.log('Enlaces encontrados en el archivo:');
-      const table = new Table({
-        head: ['URL'.info, 'Text'.info, 'HTTPcode'.info, 'Status'.info],
-        colWidths: [30, 30, 10, 10]
-      });
+const statsWithBroken = async (links) => {
+  const totalLinks = links.length;
+  const uniqueValidLinksSet = new Set();
+  const brokenLinksSet = new Set();
 
-      const linkPromises = result.links.map(async link => {
-        const linkText = link.text || 'Sin Texto';
-        const linkUrl = link.url || 'No hay enlaces';
-        const { httpCode, statusMessage } = await getHttpCode(link.url);
-        return [
-          linkUrl,
-          linkText,
-          httpCode,
-          statusMessage
-        ];
-      });
+  for (const link of links) {
+    const { httpCode } = await getHttpCode(link.url);
+    const parsedHttpCode = parseInt(httpCode);
 
-      Promise.all(linkPromises)
-        .then(linkData => {
-          for (const data of linkData) {
-            table.push(data);
-          }
-          console.log(table.toString());
-        })
-        .catch(error => console.error(error));
-    } else if (result.type === 'directory') {
-      console.log('Enlaces encontrados en los archivos del directorio:');
-      const table = new Table({
-        head: ['URL'.info, 'Text'.info, 'HTTPcode'.info, 'Status'.info],
-        colWidths: [30, 30, 10, 10]
-      });
-      if (false) {
-        table.push(['Sin enlaces', '-', '-', '-']);
-        console.log(table.toString());
-      } else {
-        //console.log(result.contents[1])
-        const linkPromises = [];
-        for (const file of result.contents) {
-          for (const link of file.links) {
-            const linkText = link.text || 'Sin Texto';
-            const linkUrl = link.url || 'No hay enlaces';
-           // console.log("Aló")
-            // console.log(linkText, linkUrl)
-            linkPromises.push(
-              (async () => {
-                const { httpCode, statusMessage } = await getHttpCode(link.url);
-                return [
-                  linkUrl,
-                  linkText,
-                  httpCode,
-                  statusMessage
-                ];
-              })()
-            );
-          }
-        }
-
-        Promise.all(linkPromises)
-          .then(linkData => {
-            for (const data of linkData) {
-              table.push(data);
-            }
-            console.log(table.toString());
-          })
-          .catch(error => console.error(error));
-      }
+    if (parsedHttpCode >= 200 && parsedHttpCode < 300) {
+      uniqueValidLinksSet.add(link.url);
     } else {
-      console.log('No se encontraron enlaces.');
+      brokenLinksSet.add(link.url);
     }
-  })
-  .catch(error => console.error(error));
+  }
+
+  const uniqueValidLinks = uniqueValidLinksSet.size;
+  const brokenLinks = brokenLinksSet.size;
+
+  const statsTable = new Table();
+  statsTable.push({ 'Total Links': totalLinks });
+  statsTable.push({ 'Unique Links': uniqueValidLinks });
+  statsTable.push({ 'Broken Links': brokenLinks });
+
+  return statsTable.toString();
+};
 
 
 
 module.exports = {
   mdLinks,
+  getHttpCode,
+  statsWithBroken
 };
 
