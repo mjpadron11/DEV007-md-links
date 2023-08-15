@@ -110,11 +110,17 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
 async function getHttpCode(url) {
   try {
     const response = await axios.get(url);
-    return { httpCode: response.status, statusMessage:'OK', response: response.data };
+    return { httpCode: response.status, statusMessage: 'OK', response: response.data };
   } catch (error) {
-    return { httpCode: colors.fail('404'), statusMessage: colors.fail('FAIL'), response: error.response.data };
+    if (error.response) {
+      // Verifica si error.response está definido antes de acceder a sus propiedades
+      return { httpCode: colors.fail(error.response.status), statusMessage: colors.fail('FAIL'), response: error.response.data };
+    } else {
+      return { httpCode: colors.fail('404'), statusMessage: colors.fail('FAIL'), response: 'Error without response' };
+    }
   }
 }
+
 
 const statsWithBroken = async (links) => {
   const totalLinks = links.length;
@@ -135,10 +141,25 @@ const statsWithBroken = async (links) => {
   const uniqueValidLinks = uniqueValidLinksSet.size;
   const brokenLinks = brokenLinksSet.size;
 
-  const statsTable = new Table();
-  statsTable.push({ 'Total Links': totalLinks });
-  statsTable.push({ 'Unique Links': uniqueValidLinks });
-  statsTable.push({ 'Broken Links': brokenLinks });
+  // const statsTable = new Table();
+  // statsTable.push({ [colors.info('Total links')]: totalLinks });
+  // statsTable.push({ [colors.info('Unique links')]: uniqueValidLinks });
+  // statsTable.push({ [colors.info('Broken links')]: brokenLinks });
+
+  // Define los nombres de las propiedades y sus valores
+const statsData = [
+  { name: 'Total links', value: totalLinks },
+  { name: 'Unique links', value: uniqueValidLinks },
+  { name: 'Broken links', value: brokenLinks },
+];
+
+const statsTable = new Table(config);
+
+// Agrega cada propiedad y valor a la tabla
+statsData.forEach(({ name, value }) => {
+  const styledName = colors.info(name);
+  statsTable.push({ [styledName]: value });
+});
 
   return statsTable.toString();
 };
