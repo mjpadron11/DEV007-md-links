@@ -47,14 +47,14 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
       if (fs.statSync(href).isFile() && path.extname(href) === '.md') {
         const mdContent = fs.readFileSync(href, 'utf-8');
         if (typeof mdContent === 'string' && mdContent.trim() !== '') {
-          const links = extractLinksFromMarkdown(mdContent); // Extraer los enlaces del archivo .md usando la función con expresión regular
+          const links = extractLinksFromMarkdown(mdContent); // Extracts links from .md file using regex
           mdFiles.push({
             path: href,
             content: mdContent,
             links: links,
           });
         } else {
-          console.fail(colors.fail(`El archivo "${href}" tiene contenido no válido o está vacío.`));
+          console.fail(colors.fail(`The file "${href}" contains unvalid content or is empty`));
         }
       } else if (fs.statSync(href).isDirectory()) {
         mdFiles.push(...extractMDFilesFromDir(href));
@@ -69,28 +69,28 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
     const absoluteRoute = isAbsolute ? route : path.resolve(route);
 
     if (!fs.existsSync(absoluteRoute)) {
-      const errorMessage = colors.fail('La ruta no existe');
-      console.error(colors.fail(`El archivo en la ruta ${absoluteRoute} no existe.`));
+      const errorMessage = colors.fail('The route does not exist');
+      console.error(colors.fail(`The file in the route ${absoluteRoute} does not exist.`));
       reject(new Error(errorMessage));
     } else {
-      console.log(colors.ok(`El archivo en la ruta ${absoluteRoute} existe.`));
+      console.log(colors.ok(`The file in the route ${absoluteRoute} exists.`));
 
       fs.stat(absoluteRoute, (error, stats) => {
         if (error) {
-          console.error(colors.fail(`Error al obtener información de la ruta ${absoluteRoute}.`));
+          console.error(colors.fail(`Error when obtaining information from route ${absoluteRoute}.`));
           reject(error);
         } else {
           if (stats.isFile()) {
-            console.log(`La ruta "${absoluteRoute}" es un archivo.`);
+            console.log(`The route "${absoluteRoute}" is a file.`);
             const mdContent = fs.readFileSync(absoluteRoute, 'utf-8');
             const links = markdownLinkExtractor.extract(mdContent); // Extract links from the .md file
             resolve({ type: 'file', path: absoluteRoute, content: mdContent, links: links });
           } else if (stats.isDirectory()) {
-            console.log(colors.warn(`La ruta "${absoluteRoute}" es un directorio.`));
+            console.log(colors.warn(`The route "${absoluteRoute}" is a directory.`));
 
             const files = fs.readdirSync(absoluteRoute);
             if (!files.length) {
-              console.log(colors.warn(`El directorio "${absoluteRoute}" está vacío.`));
+              console.log(colors.warn(`The directory "${absoluteRoute}" is empty.`));
               resolve({ type: 'directory', path: absoluteRoute, contents: [], links: [] });
             } else {
               const mdFiles = extractMDFilesFromDir(absoluteRoute);
@@ -98,8 +98,8 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
               resolve({ type: 'directory', path: absoluteRoute, contents: mdFiles, links: allLinks });
             }
           } else {
-            console.log(`La ruta "${absoluteRoute}" no es ni un archivo ni un directorio.`);
-            reject(new Error('Ruta desconocida'));
+            console.log(`The route "${absoluteRoute}" is not a file nor a directory`);
+            reject(new Error('Unknown route'));
           }
         }
       });
@@ -113,7 +113,7 @@ async function getHttpCode(url) {
     return { httpCode: response.status, statusMessage: 'OK', response: response.data };
   } catch (error) {
     if (error.response) {
-      // Verifica si error.response está definido antes de acceder a sus propiedades
+      // Verify if error.response is defined before acceding its properties
       return { httpCode: colors.fail(error.response.status), statusMessage: colors.fail('FAIL'), response: error.response.data };
     } else {
       return { httpCode: colors.fail('404'), statusMessage: colors.fail('FAIL'), response: 'Error without response' };
@@ -123,6 +123,10 @@ async function getHttpCode(url) {
 
 
 const statsWithBroken = async (links) => {
+  if (links.length === 0) { //Validation in case no links were found 
+    return colors.fail('No links were found.');
+  }
+
   const totalLinks = links.length;
   const uniqueValidLinksSet = new Set();
   const brokenLinksSet = new Set();
@@ -146,16 +150,17 @@ const statsWithBroken = async (links) => {
   // statsTable.push({ [colors.info('Unique links')]: uniqueValidLinks });
   // statsTable.push({ [colors.info('Broken links')]: brokenLinks });
 
-  // Define los nombres de las propiedades y sus valores
-const statsData = [
-  { name: 'Total links', value: totalLinks },
-  { name: 'Unique links', value: uniqueValidLinks },
-  { name: 'Broken links', value: brokenLinks },
+  // Define properties names and its values
+  console.log('Stats found:');
+  const statsData = [
+    { name: 'Total links', value: totalLinks },
+    { name: 'Unique links', value: uniqueValidLinks },
+    { name: 'Broken links', value: brokenLinks },
 ];
 
 const statsTable = new Table(config);
 
-// Agrega cada propiedad y valor a la tabla
+// Adds each property and value into the table
 statsData.forEach(({ name, value }) => {
   const styledName = colors.info(name);
   statsTable.push({ [styledName]: value });

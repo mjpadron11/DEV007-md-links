@@ -19,21 +19,21 @@ colors.setTheme({
 
 if (command) 
   if (!hasValidateOption && !hasStatsOption) {
-    console.log(colors.fail(`Comando no válido o no proporcionado. Debe ser ${colors.info('--validate')}, ${colors.info('--stats')}, ${colors.info('--validate --stats')} o ${colors.info('--stats --validate')}.`));
+    console.log(colors.fail(`The command is valid or it was not provided. It must be ${colors.info('--validate')}, ${colors.info('--stats')}, ${colors.info('--validate --stats')} or ${colors.info('--stats --validate')}.`));
 } else {
   mdLinks(command, { validate: hasValidateOption })
     .then(result => {
       if (hasValidateOption) {
         if (result.type === 'file') {
           // Print the table of validated links
-          console.log('Enlaces encontrados en el archivo:');
+          console.log('Info found:');
           const table = new Table({
             head: ['URL'.info, 'Text'.info, 'HTTPcode'.info, 'Status'.info],
             colWidths: [30, 30, 10, 10]
           });
 
           const linkPromises = result.links.map(async link => {
-            const linkText = link.text || 'Sin Texto';
+            const linkText = link.text || 'No text';
             const { httpCode, statusMessage } = await getHttpCode(link.url);
             return [link.url, linkText, httpCode, statusMessage];
           });
@@ -48,15 +48,15 @@ if (command)
             .catch(error => console.error(error));
         } else if (result.type === 'directory') {
           // Print the table of validated links
-          console.log('Enlaces encontrados en los archivos del directorio:');
+          console.log('Info found:');
           const table = new Table({
             head: ['URL'.info, 'Text'.info, 'HTTPcode'.info, 'Status'.info],
             colWidths: [30, 30, 10, 10]
           });
 
           const linkPromises = result.links.map(async link => {
-            const linkText = link.text || 'Sin Texto';
-            const linkUrl = link.url || 'No hay enlaces';
+            const linkText = link.text || 'No text';
+            const linkUrl = link.url || 'No links';
             const { httpCode, statusMessage } = await getHttpCode(link.url);
             return [
               linkUrl,
