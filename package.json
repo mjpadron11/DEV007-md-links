@@ -1,8 +1,25 @@
 {
-  "name": "md-links",
+  "name": "markdown-link-validator-api",
   "version": "0.1.0",
+  "description": "Tool to read, validate, and analyze files in Markdown format.",
+  "main": "index.js",
+  "bin": {
+    "mdLinks": "./app.js"
+  },
+  "keywords": [
+    "node.js",
+    "http",
+    "mdlinks",
+    "project"
+  ],
+  "author": "Mariem Padron",
+  "license": "ISC",
   "engines": {
     "node": ">=16.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mjpadron11/DEV007-md-links.git"
   },
   "bootcamp": {
     "createdAt": "2023-06-20T14:05:58.211Z",

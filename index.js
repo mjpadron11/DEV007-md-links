@@ -13,6 +13,43 @@ colors.setTheme({
   warn: 'yellow',
 });
 
+function extractLinksFromMarkdown(content) {
+  const linkRegex = /\[(.*?)\]\((.*?)\)/g;
+  const links = [];
+  let match;
+  while ((match = linkRegex.exec(content)) !== null) {
+    const [, text, url] = match;
+    links.push({ text, url });
+  }
+  return links;
+}
+
+function extractMDFilesFromDir(dirPath) {
+  const mdFiles = [];
+
+  fs.readdirSync(dirPath).forEach((file) => {
+    const href = path.join(dirPath, file);
+
+    if (fs.statSync(href).isFile() && path.extname(href) === '.md') {
+      const mdContent = fs.readFileSync(href, 'utf-8');
+      if (typeof mdContent === 'string' && mdContent.trim() !== '') {
+        const links = extractLinksFromMarkdown(mdContent); // Extracts links from .md file using regex
+        mdFiles.push({
+          path: href,
+          content: mdContent,
+          links: links,
+        });
+      } else {
+        console.fail(colors.fail(`The file "${href}" contains unvalid content or is empty`));
+      }
+    } else if (fs.statSync(href).isDirectory()) {
+      mdFiles.push(...extractMDFilesFromDir(href));
+    }
+  });
+
+  return mdFiles;
+}
+
 const mdLinks = (route = process.argv[2], options = {validate: false, stats: false}) => {
   config = { 
     columns: {
@@ -27,42 +64,7 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
       }
     }
   };
-  function extractLinksFromMarkdown(content) {
-    const linkRegex = /\[(.*?)\]\((.*?)\)/g;
-    const links = [];
-    let match;
-    while ((match = linkRegex.exec(content)) !== null) {
-      const [, text, url] = match;
-      links.push({ text, url });
-    }
-    return links;
-  }
   
-  function extractMDFilesFromDir(dirPath) {
-    const mdFiles = [];
-  
-    fs.readdirSync(dirPath).forEach((file) => {
-      const href = path.join(dirPath, file);
-  
-      if (fs.statSync(href).isFile() && path.extname(href) === '.md') {
-        const mdContent = fs.readFileSync(href, 'utf-8');
-        if (typeof mdContent === 'string' && mdContent.trim() !== '') {
-          const links = extractLinksFromMarkdown(mdContent); // Extracts links from .md file using regex
-          mdFiles.push({
-            path: href,
-            content: mdContent,
-            links: links,
-          });
-        } else {
-          console.fail(colors.fail(`The file "${href}" contains unvalid content or is empty`));
-        }
-      } else if (fs.statSync(href).isDirectory()) {
-        mdFiles.push(...extractMDFilesFromDir(href));
-      }
-    });
-  
-    return mdFiles;
-  }
 
   return new Promise((resolve, reject) => {
     const isAbsolute = path.isAbsolute(route);
@@ -173,6 +175,8 @@ statsData.forEach(({ name, value }) => {
 
 module.exports = {
   mdLinks,
+  extractLinksFromMarkdown, 
+  extractMDFilesFromDir,
   getHttpCode,
   statsWithBroken
 };
