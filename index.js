@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
 const Table = require('cli-table');
-const markdownLinkExtractor = require('markdown-link-extractor');
+// const markdownLinkExtractor = require('markdown-link-extractor');
 const axios = require('axios');
 
 
@@ -18,17 +18,18 @@ function extractLinksFromMarkdown(content) {
   const links = [];
   let match;
   while ((match = linkRegex.exec(content)) !== null) {
-    const [, text, url] = match;
+    const [, text, url] = match;//Destructures the match in three parts, the whole coincidence will be 'match',
+    //the text inside [] and url will be the link inside ()
     links.push({ text, url });
   }
   return links;
 }
 
-function extractMDFilesFromDir(dirPath) {
-  const mdFiles = [];
+function extractMDFilesFromDir(dirPath) { 
+const mdFiles = [];
 
-  fs.readdirSync(dirPath).forEach((file) => {
-    const href = path.join(dirPath, file);
+  fs.readdirSync(dirPath).forEach((file) => { // Reads the content inside the directory and process each file and directory that could be within it.
+    const href = path.join(dirPath, file); // For each element(file or directoy) it creates the complete route
 
     if (fs.statSync(href).isFile() && path.extname(href) === '.md') {
       const mdContent = fs.readFileSync(href, 'utf-8');
@@ -40,7 +41,7 @@ function extractMDFilesFromDir(dirPath) {
           links: links,
         });
       } else {
-        console.fail(colors.fail(`The file "${href}" contains unvalid content or is empty`));
+        console.fail(colors.fail(`The file "${href}" contains unvalid content`));
       }
     } else if (fs.statSync(href).isDirectory()) {
       mdFiles.push(...extractMDFilesFromDir(href));
@@ -54,13 +55,13 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
   config = { 
     columns: {
       0: {
-        width: 20    // Column 0 of width 1
+        width: 20 
       },
       1: {
-        width: 20  // Column 1 of width 20
+        width: 20 
       },
       2: {
-        width: 20   // Column 2 of width 5
+        width: 20 
       }
     }
   };
@@ -72,10 +73,10 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
 
     if (!fs.existsSync(absoluteRoute)) {
       const errorMessage = colors.fail('The route does not exist');
-      console.error(colors.fail(`The file in the route ${absoluteRoute} does not exist.`));
+      console.error(colors.fail(`The file in the route ${colors.info(absoluteRoute)} does not exist.`));
       reject(new Error(errorMessage));
     } else {
-      console.log(colors.ok(`The file in the route ${absoluteRoute} exists.`));
+      console.log(colors.ok(`The file in the route ${colors.info(absoluteRoute)} exists.`));
 
       fs.stat(absoluteRoute, (error, stats) => {
         if (error) {
@@ -85,7 +86,8 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
           if (stats.isFile()) {
             console.log(`The route "${absoluteRoute}" is a file.`);
             const mdContent = fs.readFileSync(absoluteRoute, 'utf-8');
-            const links = markdownLinkExtractor.extract(mdContent); // Extract links from the .md file
+            // const links = markdownLinkExtractor.extract(mdContent); // Extract links from the .md file with a different
+            const links = extractLinksFromMarkdown(mdContent);
             resolve({ type: 'file', path: absoluteRoute, content: mdContent, links: links });
           } else if (stats.isDirectory()) {
             console.log(colors.warn(`The route "${absoluteRoute}" is a directory.`));
@@ -123,7 +125,6 @@ async function getHttpCode(url) {
   }
 }
 
-
 const statsWithBroken = async (links) => {
   if (links.length === 0) { //Validation in case no links were found 
     return colors.fail('No links were found.');
@@ -147,11 +148,6 @@ const statsWithBroken = async (links) => {
   const uniqueValidLinks = uniqueValidLinksSet.size;
   const brokenLinks = brokenLinksSet.size;
 
-  // const statsTable = new Table();
-  // statsTable.push({ [colors.info('Total links')]: totalLinks });
-  // statsTable.push({ [colors.info('Unique links')]: uniqueValidLinks });
-  // statsTable.push({ [colors.info('Broken links')]: brokenLinks });
-
   // Define properties names and its values
   console.log('Stats found:');
   const statsData = [
@@ -167,11 +163,8 @@ statsData.forEach(({ name, value }) => {
   const styledName = colors.info(name);
   statsTable.push({ [styledName]: value });
 });
-
   return statsTable.toString();
 };
-
-
 
 module.exports = {
   mdLinks,

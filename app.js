@@ -19,12 +19,15 @@ colors.setTheme({
 
 if (command) 
   if (!hasValidateOption && !hasStatsOption) {
-    console.log(colors.fail(`The command is valid or it was not provided. It must be ${colors.info('--validate')}, ${colors.info('--stats')}, ${colors.info('--validate --stats')} or ${colors.info('--stats --validate')}.`));
+    console.log(colors.fail(`The command is not valid or it was not provided. It must be ${colors.info('--validate')}, ${colors.info('--stats')}, ${colors.info('--validate --stats')} or ${colors.info('--stats --validate')}.`));
 } else {
   mdLinks(command, { validate: hasValidateOption })
     .then(result => {
       if (hasValidateOption) {
-        if (result.type === 'file') {
+        if(!result.links.length){
+          console.log(colors.fail('No info found'));
+          return
+        } else if (result.type === 'file') {
           // Print the table of validated links
           console.log('Info found:');
           const table = new Table({

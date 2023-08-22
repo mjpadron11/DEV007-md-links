@@ -2,18 +2,18 @@ const { mdLinks, extractLinksFromMarkdown, extractMDFilesFromDir, getHttpCode, s
 const fs = require('fs');
 const path = require('path');
 const axios = require ('axios');
-const { stat } = require('fs/promises');
 
 // Mock para fs.existsSync
 jest.mock('fs', () => ({
   mdLinks: jest.fn(() => true),
   existsSync: jest.fn(() => true),
-  extractLinksFromMarkdown: jest.fn(),
-  extractMDFilesFromDir: jest.fn(), // Simula que el archivo existe
+  extractMDFilesFromDir: jest.fn(),
+  readdirSync: jest.fn(),
+  statSync: jest.fn(),
+  readFileSync: jest.fn(),
 }));
 
 jest.mock('axios');
-
 
 describe('mdLinks', () => {
   it('It should be a function', () => {
@@ -32,6 +32,15 @@ describe('mdLinks', () => {
       .then((res) => expect(res).toBe("The path does not exist .md file"))
       .catch((rej) => rej);
     done();
+  });
+  it('should reject with an error when the route does not exist', async () => {
+    // Mock fs.existsSync to simulate that the route does not exist
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+
+    const absoluteRoute = path.join(__dirname, 'nonexistent-folder');
+
+    // Use expect(...).rejects to verify that the function rejects with an error
+    await expect(mdLinks(absoluteRoute)).rejects.toThrowError('The route does not exist');
   });
   describe('mdLinks - Check if input path is absolute', () => {
     it('should convert relative path to an absolute path', async () => {
@@ -78,15 +87,6 @@ describe('extractMDFilesFromDir', () => {
   it('Should be a function', () => {
     expect(typeof extractMDFilesFromDir).toBe('function');
   });
-
-  // it('should call the real functions readdirSync and statSync', () => {
-  //   const dirPath = path.resolve(__dirname, 'testing-files', 'card-validator');
-  
-  //   const result = extractMDFilesFromDir(dirPath);
-  
-  //   expect(result).toHaveLength(2);
-  //   expect(result[0]).toHaveProperty('path', path.join(dirPath, 'readme.md'));
-  // });
   it('should resolve with a link object with status "ok" for successful requests', async () => {
     const link = {
       href: 'http://README.com',
@@ -101,9 +101,7 @@ describe('extractMDFilesFromDir', () => {
       console.error(error);
     }
   });
-  
 })
-
 
 describe('getHttpCode', () => {
   it('Should be a function', () => {
@@ -115,11 +113,29 @@ describe('getHttpCode', () => {
     expect(response.httpCode).toBe(200);
     expect(response.statusMessage).toBe('OK');
   });
-  // it('should return HTTP code 404 and status message "FAIL" for a failed request', async () => {
-  //   const url = 'https://www.fakewebpage12345.com/error/doesnotexist';
-  //   const response = await getHttpCode(url);
-  //   expect(response.httpCode).toBe(404);
-  //   expect(response.statusMessage).toBe('FAIL');
+  
+    it('should return HTTP code 404 and status message "FAIL" for a failed request', async () => {
+      const url = 'https://www.fakewebpage12345.com/errordoesnotexist';
+      const response = await getHttpCode(url);
+      console.log(response)
+      expect(response.httpCode).toBe(404);
+      expect(response.statusMessage).toBe('FAIL');
+    });
+
+
+  // it('should return an error response object with status when error.response is defined', () => {
+  //   const error = {
+  //     response: {
+  //       status: 500,
+  //       data: 'Server error',
+  //     },
+  //   };
+
+  //   const result = getHttpCode(error);
+
+  //   expect(result.httpCode).toBe(error.response.status);
+  //   expect(result.statusMessage).toBe('FAIL');
+  //   expect(result.response).toBe(error.response.data);
   // });
 })
 
@@ -132,12 +148,33 @@ describe('statsWithBroken', () => {
       { href: 'https://google.com', ok: 'ok' },
       { href: 'https://github.com', ok: 'ok' },
     ];
-    const expectedStats = {
-      Total: 2,
-      Unique: 2,
-      Broken: 0,
-    };
-    const result = await statsWithBroken(links);
-    console.log(result); 
+    const expectedStats = [
+    '┌──────────────┬───┐',
+    '│ Total links  │ 2 │',
+    '├──────────────┼───┤',
+    '│ Unique links │ 1 │',
+    '├──────────────┼───┤',
+    '│ Broken links │ 0 │',
+    '└──────────────┴───┘',
+  ].join('\n');
+
+  const result = await statsWithBroken(links);
+  
+  // expect(result).toEqual(expectedStats);
+  // expect(result).toHaveLength(336)
+  expect(result).toBeDefined()
+  })
+
+  it('should not throw an error when no links are provided', async () => {
+    const links = []; // Empty array of links
+  
+    try {
+      const result = await statsWithBroken(links);
+      console.log(result)
+      expect(result).toBeTruthy(); // For example, check if the result is defined
+    } catch (error) {
+      fail('Unexpected error was thrown');
+    }
   });
+  
 })

@@ -1,6 +1,7 @@
 {
   "env": {
-    "node": true
+    "node": true,
+    "jest": true
   },
   "parserOptions": {
     "ecmaVersion": 8
@@ -13,7 +14,7 @@
     "no-param-reassign": ["error", { "props": false }],
     "import/extensions": 0,
     "import/prefer-default-export": 0,
-    "jest/no-disabled-tests": "warn",
+    "jest/no-disabled-tests": "error",
     "jest/no-focused-tests": "error",
     "jest/no-identical-title": "error",
     "jest/prefer-to-have-length": "warn",
