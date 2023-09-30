@@ -26,7 +26,7 @@ Markdown files can contain links to websites, online resources, or even to other
 
 For example:
 
-![example](./images/image.png)
+![example](./images/example.jpg)
 
 ## 2. Summary
 
