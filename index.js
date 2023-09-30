@@ -55,7 +55,7 @@ const mdLinks = (route = process.argv[2], options = {validate: false, stats: fal
   config = { 
     columns: {
       0: {
-        width: 20 
+        width: 20    // Column 0 of width 1
       },
       1: {
         width: 20 
